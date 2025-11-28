@@ -1,6 +1,5 @@
 import numpy as np
 from typing import List, Tuple, Set
-from dataclasses import dataclass
 from enum import IntEnum
 
 class Direction(IntEnum):
@@ -162,7 +161,6 @@ class PaperIOGame:
             return 0.0
 
         old_territory_size = len(player.territory)
-
         trail_set = set(player.trail)
 
         for pos in player.trail:
@@ -293,15 +291,15 @@ class PaperIOGame:
         num_alive_opponents = sum(1 for p in self.players[1:] if p.alive)
         curr_state.append(num_alive_opponents / self.opponents)
         curr_state.append(self.steps / self.maximum_steps)
-        nearest_opponent_dist = float('inf')
+        opp_dist = float('inf')
 
         for other in self.players[1:]:
             if other.alive:
                 dist = abs(other.x - player.x) + abs(other.y - player.y)
-                nearest_opponent_dist = min(nearest_opponent_dist, dist)
+                opp_dist = min(opp_dist, dist)
 
-        if nearest_opponent_dist != float('inf'):
-            curr_state.append(nearest_opponent_dist / nearest_opponent_dist)
+        if opp_dist != float('inf'):
+            curr_state.append(opp_dist / opp_dist)
         else:
             curr_state.append(1.0)
 
