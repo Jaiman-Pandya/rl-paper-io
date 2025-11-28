@@ -292,10 +292,20 @@ class PaperIOGame:
                 dist = abs(other.x - player.x) + abs(other.y - player.y)
                 nearest_opponent_dist = min(nearest_opponent_dist, dist)
 
-        curr_state.append(min(nearest_opponent_dist / self.grid_size, 1.0) if nearest_opponent_dist != float('inf') else 1.0)
+        if nearest_opponent_dist != float('inf'):
+            curr_state.append(nearest_opponent_dist / nearest_opponent_dist)
+        else:
+            curr_state.append(1.0)
+
         curr_state.append(len(player.territory) / (self.grid_size * self.grid_size))
 
-        max_territory = max((len(p.territory) for p in self.players if p.alive), default=0)
+        max_territory = 0
+        for p in self.players:
+            if p.alive:
+                territory_size = len(p.territory)
+                if territory_size > max_territory:
+                    max_territory = territory_size
+
         curr_state.append(max_territory / (self.grid_size * self.grid_size))
 
         return np.array(curr_state, dtype=np.float32)
