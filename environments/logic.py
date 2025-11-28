@@ -9,18 +9,21 @@ class Direction(IntEnum):
     LEFT = 3
 
 class Player:
-    def __init__(self, x, y, direction, color):
+    def __init__(self, x, y, direction, color, territory=None, trail=None, alive=True, score=0.0):
         self.x = x
         self.y = y
         self.direction = direction
         self.color = color
-        self.territory = set()
-        self.trail = []
-        self.alive = True
-        self.score = 0.0
+        self.territory = territory or set()
+        self.trail = trail or []
+        self.alive = alive
+        self.score = score
 
-    def get_pos(self) -> Tuple[int, int]:
+    def get_grid_pos(self):
         return int(self.x), int(self.y)
+
+def manhattan_distance(pos1, pos2):
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 class PaperIOGame:
     def __init__(self, grid_size: int = 50, num_opponents: int = 3):
@@ -132,7 +135,7 @@ class PaperIOGame:
         if not (0 <= player.x < self.grid_size and 0 <= player.y < self.grid_size):
             return True, 0.0
 
-        pos = player.get_pos()
+        pos = player.get_grid_pos()
 
         if pos in player.territory:
             if len(player.trail) > 0:
@@ -195,9 +198,6 @@ class PaperIOGame:
 
         return crossings % 2 == 1
 
-    def manhattan_distance(pos1, pos2):
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
-
     def ai_player(self, player: Player) -> int:
         if not player.alive:
             return 0
@@ -209,7 +209,7 @@ class PaperIOGame:
                 player_pos = (player.x, player.y)
 
                 for pos in player.territory:
-                    dist = self.manhattan_distance(pos, player_pos)
+                    dist = manhattan_distance(pos, player_pos)
                     if dist < min_dist:
                         min_dist = dist
                         nearest = pos
@@ -287,7 +287,7 @@ class PaperIOGame:
         else:
             curr_state.append(0.0)
 
-        curr_state.append(1.0 if player.get_pos() in player.territory else 0.0)
+        curr_state.append(1.0 if player.get_grid_pos() in player.territory else 0.0)
         num_alive_opponents = sum(1 for p in self.players[1:] if p.alive)
         curr_state.append(num_alive_opponents / self.opponents)
         curr_state.append(self.steps / self.maximum_steps)
@@ -298,10 +298,10 @@ class PaperIOGame:
                 dist = abs(other.x - player.x) + abs(other.y - player.y)
                 opp_dist = min(opp_dist, dist)
 
-        if opp_dist != float('inf'):
-            curr_state.append(opp_dist / opp_dist)
+        if opp_dist == 0:
+            curr_state.append(0.0)
         else:
-            curr_state.append(1.0)
+            curr_state.append(min(opp_dist / self.grid_size, 1.0))
 
         curr_state.append(len(player.territory) / (self.grid_size * self.grid_size))
 

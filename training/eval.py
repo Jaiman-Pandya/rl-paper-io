@@ -77,9 +77,9 @@ def compare():
         results[name] = eval(agent, num_episodes=100)
 
         print(f"{name} Results:")
-        print(f" Mean Score: {results[name]['mean_score']:.1%} ± {results[name]['std_score']:.1%}")
-        print(f" Max Score: {results[name]['max_score']:.1%}")
-        print(f" Mean Survival: {results[name]['mean_survival']:.0f} steps")
+        print(f"Mean Score: {results[name]['mean_score']:.1%} ± {results[name]['std_score']:.1%}")
+        print(f"Max Score: {results[name]['max_score']:.1%}")
+        print(f"Mean Survival: {results[name]['mean_survival']:.0f} steps")
 
     return results
 

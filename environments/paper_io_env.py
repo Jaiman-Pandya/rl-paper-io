@@ -15,7 +15,7 @@ class PaperIOEnv(gym.Env):
         self.rendering = mode
         self.renderer = None
         self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(20), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(20,), dtype=np.float32)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)

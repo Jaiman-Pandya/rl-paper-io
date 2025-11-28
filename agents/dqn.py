@@ -6,7 +6,7 @@ import numpy as np
 class DQN(nn.Module):
     def __init__(self, state_dimensions, action_dimensions):
         super(DQN, self).__init__()
-        self.neuralnet = nn.Sequential(
+        self.network = nn.Sequential(
             nn.Linear(state_dimensions, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
@@ -17,7 +17,7 @@ class DQN(nn.Module):
         )
 
     def forward(self, x):
-        return self.neuralnet(x)
+        return self.network(x)
 
 class DQNAgent:
     def __init__(self, state_dim, action_dim, lr=0.001, gamma=0.99, epsilon_start=1.0, epsilon_end=0.01, epsilon_decay=0.995):
@@ -84,7 +84,7 @@ class DQNAgent:
 
     def load(self, path):
         checkpoint = torch.load(path)
-        self.policy.load_state_dict(checkpoint['policy'])
-        self.target.load_state_dict(checkpoint['target'])
+        self.policy.load_state_dict(checkpoint['policy_net'])
+        self.target.load_state_dict(checkpoint['target_net'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.epsilon = checkpoint['epsilon']
