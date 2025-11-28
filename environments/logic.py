@@ -275,7 +275,15 @@ class PaperIOGame:
             curr_state.append(danger)
 
         if len(player.trail) > 0 and len(player.territory) > 0:
-            nearest = min(player.territory, key = lambda p: abs(p[0] - player.x) + abs(p[1] - player.y))
+            min_dist = float('inf')
+            nearest = None
+
+            for pos in player.territory:
+                dist = abs(pos[0] - player.x) + abs(pos[1] - player.y)
+                if dist < min_dist:
+                    min_dist = dist
+                    nearest = pos
+
             dist = abs(nearest[0] - player.x) + abs(nearest[1] - player.y)
             curr_state.append(min(dist / 20.0, 1.0))
         else:
