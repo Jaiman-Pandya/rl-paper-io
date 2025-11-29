@@ -4,6 +4,8 @@ import os
 
 agents = ['Random', 'Rule-Based', 'DQN']
 
+# TODO: Replace hard-coded values with actual results from evaluation
+# This should be generated automatically from eval.py results
 # using the results we had from the eval
 avg_scores = [0.4, 0.4, 4.6]
 max_scores = [1.3, 1.4, 12.7]
