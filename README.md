@@ -164,11 +164,3 @@ The project includes:
 - [ ] Add hyperparameter tuning framework
 - [ ] Implement multi-agent training
 
-## License
-
-[Add your license here]
-
-## Authors
-
-[Add author information here]
-
