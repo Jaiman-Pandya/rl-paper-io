@@ -2,6 +2,8 @@
 
 A reinforcement learning project implementing Deep Q-Network (DQN) to train an agent to play Paper.io, a territory-capture game.
 
+![Paper.io Gameplay](https://github.com/user-attachments/assets/245d46a2-dfd2-4a9a-9c81-df5b34c2868b)
+
 ## Project Overview
 
 This project implements a DQN agent to learn optimal strategies for Paper.io, where the goal is to capture territory by drawing trails and returning to your own territory. The agent competes against rule-based opponents in a grid-based environment.
