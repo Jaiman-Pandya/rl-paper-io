@@ -30,11 +30,11 @@ Paper.io is a real-time strategy game where players:
 
 ```
 rl-paper-io/
-├── agents/              # Agent implementations
+├── agents/             # Agent implementations
 │   ├── dqn.py          # DQN agent with neural network
 │   ├── random.py       # Random baseline agent
 │   └── rule.py         # Rule-based baseline agent
-├── environments/        # Game environment
+├── environments/       # Game environment
 │   ├── logic.py        # Core game logic and state management
 │   ├── paper_io_env.py # Gymnasium environment wrapper
 │   └── renderer.py     # Pygame visualization
