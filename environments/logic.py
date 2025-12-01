@@ -3,12 +3,18 @@ from typing import List, Tuple, Set
 from enum import IntEnum
 
 class Direction(IntEnum):
+    '''
+    Enum defining player direction  
+    '''
     UP = 0
     RIGHT = 1
     DOWN = 2
     LEFT = 3
 
 class Player:
+    '''
+    Class defining a specific player with all with all of the necessary information.
+    '''
     def __init__(self, x, y, direction, color, territory=None, trail=None, alive=True, score=0.0):
         self.x = x
         self.y = y
@@ -20,12 +26,21 @@ class Player:
         self.score = score
 
     def get_grid_pos(self):
+        '''
+        Returns the position of the current player
+        '''
         return int(self.x), int(self.y)
 
 def manhattan_distance(pos1, pos2):
+    '''
+    helper function for manhattan distance
+    '''
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 class PaperIOGame:
+    '''
+    Game definition, has a grid with a list of players
+    '''
     def __init__(self, grid_size: int = 50, num_opponents: int = 3):
         self.grid_size = grid_size
         self.opponents = num_opponents
@@ -35,6 +50,13 @@ class PaperIOGame:
         self.maximum_steps = 2000
 
     def reset(self) -> Player:
+        '''
+        resets the game by adding a default main player to the game, and then 
+        randomly spawning opponents to different areas
+
+        Returns: 
+            The main player
+        '''
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=np.int32)
         self.players = []
         self.steps = 0
@@ -63,6 +85,10 @@ class PaperIOGame:
 
     def create_player(self, player_id: int, x: int, y: int,
                       color: Tuple[int, int, int]) -> Player:
+        '''
+        Makes a new player and puts initializes it to the correct position. 
+        Also calculate the amount of territory obtained by the player
+        '''
 
         territory = set()
         for dx in range(-1, 2):
@@ -85,11 +111,13 @@ class PaperIOGame:
         )
 
     def step(self, main_player_action: int, opponent_actions: List[int] = None):
+        '''
+        Progresses the game by calculating the score adds that to the players score
+        '''
         self.steps += 1
 
         reward = 0
         if self.players[0].alive:
-            old_score = self.players[0].score
             dead, gained = self.move(self.players[0], main_player_action)
 
             if dead:
@@ -118,6 +146,9 @@ class PaperIOGame:
         return reward, finished
 
     def move(self, player: Player, action: int) -> Tuple[bool, float]:
+        '''
+        Defines the movement for the player, giving it a set number of actions 
+        '''
         if action == 1:
             player.direction = Direction((player.direction - 1) % 4)
         elif action == 2:
@@ -160,6 +191,9 @@ class PaperIOGame:
             return False, 0.0
 
     def gain_grid_pos(self, player: Player) -> float:
+        '''
+        Increments player territory based on trails completed by the player 
+        '''
         if len(player.trail) < 3:
             return 0.0
 
@@ -188,6 +222,9 @@ class PaperIOGame:
         return total_gained
 
     def inside_trail(self, x: int, y: int, trail: Set[Tuple[int, int]], territory: Set[Tuple[int, int]]) -> bool:
+        '''
+        Determines if the player is inside some other trail
+        '''
         if (x, y) in trail or (x, y) in territory:
             return True
 
@@ -199,6 +236,9 @@ class PaperIOGame:
         return crossings % 2 == 1
 
     def ai_player(self, player: Player) -> int:
+        '''
+        Randomly chooses the players next move
+        '''
         if not player.alive:
             return 0
 
@@ -231,6 +271,9 @@ class PaperIOGame:
         return np.random.choice([0, 1, 2], p=[0.7, 0.15, 0.15])
 
     def get_player_state(self, player: Player) -> np.ndarray:
+        '''
+        Returns a 20-dimensional NumPy array representing the current game state from the perspective of the given player
+        '''
         if not player.alive:
             return np.zeros(20)
 
