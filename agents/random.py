@@ -5,6 +5,7 @@ class RandomAgent:
     """Baseline agent that selects actions uniformly at random.
     
     Used as a simple baseline for comparison with learned agents.
+    This agent behaves completely randomly, with no objective or ruleset.
     """
     def __init__(self, action_dim: int):
         """Initialize the random agent.
