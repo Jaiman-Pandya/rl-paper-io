@@ -155,6 +155,10 @@ The project includes:
 - +20 for >70% territory
 - -100 for death
 
+### Plots
+<img width="1500" height="400" alt="image" src="https://github.com/user-attachments/assets/1af137f8-62c9-49ba-9082-69307d2cf9ef" />
+
+
 ## Future Improvements
 
 - [ ] Implement Double DQN or Dueling DQN variants
