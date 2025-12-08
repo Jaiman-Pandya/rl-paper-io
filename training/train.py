@@ -7,6 +7,7 @@ from tqdm import tqdm
 from typing import Tuple, List
 import random
 import torch
+import csv
 
 from environments.paper_io_env import PaperIOEnv
 from agents.dqn import DQNAgent
@@ -32,6 +33,9 @@ def set_random_seeds(seed: int):
 
 def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, List[float], List[float]]:
     """Train a DQN agent on the Paper.io environment.
+    
+    Training metrics (episode, reward, avg_loss, score, epsilon) are logged
+    to results/training_log.csv for later analysis.
     
     Args:
         num_episodes: Number of training episodes (uses config default if None)
@@ -81,6 +85,19 @@ def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, 
     scores = []
     losses = []
 
+    # Set up CSV logging for training metrics
+    os.makedirs(config.PATHS['results_dir'], exist_ok=True)
+    log_path = os.path.join(config.PATHS['results_dir'], 'training_log.csv')
+    file_exists = os.path.exists(log_path)
+    
+    # Open CSV file for appending (or create new with header)
+    csv_file = open(log_path, 'a', newline='')
+    csv_writer = csv.writer(csv_file)
+    
+    # Write header if file is new
+    if not file_exists:
+        csv_writer.writerow(['episode', 'reward', 'avg_loss', 'score', 'epsilon'])
+
     print("Beginning the training process!")
 
     for episode in tqdm(range(num_episodes)):
@@ -116,8 +133,20 @@ def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, 
         rewards.append(episode_reward)
         scores.append(info['score'])
 
+        # Calculate average loss for this episode
+        avg_loss = np.mean(episode_loss) if episode_loss else 0.0
         if episode_loss:
-            losses.append(np.mean(episode_loss))
+            losses.append(avg_loss)
+
+        # Log metrics to CSV
+        csv_writer.writerow([
+            episode + 1,  # episode (1-indexed)
+            episode_reward,  # reward
+            avg_loss,  # avg_loss
+            info['score'],  # score
+            agent.epsilon  # epsilon
+        ])
+        csv_file.flush()  # Ensure data is written immediately
 
         if (episode + 1) % checkpoint_freq == 0:
             avg_reward = np.mean(rewards[-checkpoint_freq:])
@@ -132,6 +161,9 @@ def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, 
                 f'dqn_episode_{episode + 1}.pth'
             )
             agent.save(checkpoint_path)
+
+    # Close CSV file
+    csv_file.close()
 
     env.close()
     plot_training_results(rewards, scores, losses)
