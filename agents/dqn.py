@@ -147,11 +147,19 @@ class DQNAgent:
     def load(self, path: str):
         """Load the agent's state from a file.
         
+        Supports both old format (policy_net, target_net) and new format
+        (policy, target) for backward compatibility with existing checkpoints.
+        
         Args:
             path: Path to load the checkpoint from
         """
         checkpoint = torch.load(path)
-        self.policy.load_state_dict(checkpoint['policy'])
-        self.target.load_state_dict(checkpoint['target'])
+        
+        # Handle both old and new checkpoint formats for backward compatibility
+        policy_key = 'policy' if 'policy' in checkpoint else 'policy_net'
+        target_key = 'target' if 'target' in checkpoint else 'target_net'
+        
+        self.policy.load_state_dict(checkpoint[policy_key])
+        self.target.load_state_dict(checkpoint[target_key])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.epsilon = checkpoint['epsilon']
