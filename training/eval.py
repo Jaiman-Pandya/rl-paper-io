@@ -5,11 +5,30 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 from typing import Dict, Any
+import random
+import torch
 from environments.paper_io_env import PaperIOEnv
 from agents.dqn import DQNAgent
 from agents.random import RandomAgent
 from agents.rule import RuleBasedAgent
 import config
+
+def set_random_seeds(seed: int):
+    """Set random seeds for reproducibility across all random number generators.
+    
+    Args:
+        seed: Random seed value to use for all generators
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    # Set CUDA seeds if available (for GPU reproducibility)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    # Ensure deterministic behavior (may reduce performance)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def eval(agent: Any, num_episodes: int = None, render: bool = None) -> Dict[str, Any]:
     """Evaluate an agent on the Paper.io environment.
@@ -31,7 +50,10 @@ def eval(agent: Any, num_episodes: int = None, render: bool = None) -> Dict[str,
         num_episodes = config.EVAL_CONFIG['num_episodes']
     if render is None:
         render = config.EVAL_CONFIG['render']
-        
+    
+    # Set random seeds for reproducibility
+    set_random_seeds(config.RANDOM_SEED)
+    
     if render:
         render_mode = 'human'
     else:
@@ -47,7 +69,8 @@ def eval(agent: Any, num_episodes: int = None, render: bool = None) -> Dict[str,
     survival_times = []
 
     for episode in range(num_episodes):
-        state, _ = env.reset()
+        # Reset with seed for reproducibility (each episode gets a deterministic seed)
+        state, _ = env.reset(seed=config.RANDOM_SEED + episode)
         done = False
         steps = 0
 
@@ -86,6 +109,9 @@ def compare(checkpoint_path: str = None) -> Dict[str, Dict[str, Any]]:
     Returns:
         Dictionary mapping agent names to their evaluation results
     """
+    # Set random seeds for reproducibility
+    set_random_seeds(config.RANDOM_SEED)
+    
     print("Comparing agent performances...")
 
     if checkpoint_path is None:

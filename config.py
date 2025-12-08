@@ -1,5 +1,9 @@
 """Configuration file for hyperparameters and experiment settings."""
 
+# Random seed for reproducibility
+# Set this to ensure consistent results across runs
+RANDOM_SEED = 42
+
 # Environment settings
 ENV_CONFIG = {
     'grid_size': 50,
@@ -37,5 +41,10 @@ EVAL_CONFIG = {
 PATHS = {
     'checkpoints_dir': 'checkpoints',
     'results_dir': 'results'
+}
+
+# Reproducibility settings
+REPRODUCIBILITY_CONFIG = {
+    'random_seed': RANDOM_SEED
 }
 

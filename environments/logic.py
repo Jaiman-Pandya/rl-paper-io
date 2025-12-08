@@ -49,14 +49,24 @@ class PaperIOGame:
         self.steps = 0
         self.maximum_steps = 2000
 
-    def reset(self) -> Player:
+    def reset(self, seed: int = None) -> Player:
         '''
         resets the game by adding a default main player to the game, and then 
         randomly spawning opponents to different areas
 
+        Args:
+            seed: Random seed for reproducibility (controls opponent spawn positions and colors)
+        
         Returns: 
             The main player
         '''
+        # Set seed for reproducible opponent spawning if provided
+        if seed is not None:
+            # Create a local random state for this reset to avoid affecting global state
+            rng = np.random.RandomState(seed)
+        else:
+            rng = np.random
+        
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=np.int32)
         self.players = []
         self.steps = 0
@@ -72,11 +82,11 @@ class PaperIOGame:
         for i in range(self.opponents):
             opponent = self.create_player(
                 player_id=i + 2,
-                x = np.random.randint(10, self.grid_size - 10),
-                y = np.random.randint(10, self.grid_size - 10),
-                color = (np.random.randint(50, 255),
-                       np.random.randint(50, 255),
-                       np.random.randint(50, 255))
+                x = rng.randint(10, self.grid_size - 10),
+                y = rng.randint(10, self.grid_size - 10),
+                color = (rng.randint(50, 255),
+                       rng.randint(50, 255),
+                       rng.randint(50, 255))
             )
 
             self.players.append(opponent)

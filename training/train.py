@@ -5,11 +5,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from typing import Tuple, List
+import random
+import torch
 
 from environments.paper_io_env import PaperIOEnv
 from agents.dqn import DQNAgent
 from utils.buffer import ReplayBuffer
 import config
+
+def set_random_seeds(seed: int):
+    """Set random seeds for reproducibility across all random number generators.
+    
+    Args:
+        seed: Random seed value to use for all generators
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    # Set CUDA seeds if available (for GPU reproducibility)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    # Ensure deterministic behavior (may reduce performance)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, List[float], List[float]]:
     """Train a DQN agent on the Paper.io environment.
@@ -25,7 +44,10 @@ def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, 
         num_episodes = config.TRAIN_CONFIG['num_episodes']
     if render is None:
         render = config.TRAIN_CONFIG['render']
-        
+    
+    # Set random seeds for reproducibility
+    set_random_seeds(config.RANDOM_SEED)
+    
     if render:
         mode = 'human'
     else:
@@ -62,7 +84,8 @@ def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, 
     print("Beginning the training process!")
 
     for episode in tqdm(range(num_episodes)):
-        state, _ = env.reset()
+        # Reset with seed for reproducibility (each episode gets a deterministic seed)
+        state, _ = env.reset(seed=config.RANDOM_SEED + episode)
         episode_reward = 0
         episode_loss = []
 

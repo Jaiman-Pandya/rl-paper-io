@@ -34,7 +34,7 @@ class PaperIOEnv(gym.Env):
         """Reset the environment to initial state.
         
         Args:
-            seed: Random seed for reproducibility
+            seed: Random seed for reproducibility (propagated to game logic)
             options: Additional options (unused)
             
         Returns:
@@ -42,7 +42,8 @@ class PaperIOEnv(gym.Env):
         """
         super().reset(seed=seed)
 
-        player = self.game.reset()
+        # Propagate seed to game logic for reproducible opponent spawning
+        player = self.game.reset(seed=seed)
         obs = self.game.get_player_state(player)
 
         return obs, {}
