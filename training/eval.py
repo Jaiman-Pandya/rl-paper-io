@@ -7,6 +7,9 @@ import numpy as np
 from typing import Dict, Any
 import random
 import torch
+import json
+import csv
+from datetime import datetime
 from environments.paper_io_env import PaperIOEnv
 from agents.dqn import DQNAgent
 from agents.random import RandomAgent
@@ -67,24 +70,28 @@ def eval(agent: Any, num_episodes: int = None, render: bool = None) -> Dict[str,
 
     scores = []
     survival_times = []
+    episode_rewards = []
 
     for episode in range(num_episodes):
         # Reset with seed for reproducibility (each episode gets a deterministic seed)
         state, _ = env.reset(seed=config.RANDOM_SEED + episode)
         done = False
         steps = 0
+        episode_reward = 0.0
 
         while not done:
             action = agent.select_action(state, training=False)
             state, reward, done, truncated, info = env.step(action)
             done = done or truncated
             steps += 1
+            episode_reward += reward
 
             if render:
                 env.render()
 
         scores.append(info['score'])
         survival_times.append(steps)
+        episode_rewards.append(episode_reward)
 
         if (episode + 1) % 10 == 0:
             print(f"Episode {episode + 1}/{num_episodes}: "
@@ -97,11 +104,17 @@ def eval(agent: Any, num_episodes: int = None, render: bool = None) -> Dict[str,
         'std_score': np.std(scores),
         'max_score': np.max(scores),
         'mean_survival': np.mean(survival_times),
-        'scores': scores
+        'mean_reward': np.mean(episode_rewards),
+        'std_reward': np.std(episode_rewards),
+        'scores': scores,
+        'rewards': episode_rewards
     }
 
 def compare(checkpoint_path: str = None) -> Dict[str, Dict[str, Any]]:
     """Compare performance of DQN, Random, and Rule-Based agents.
+    
+    Evaluation results are automatically saved to results/eval_results_latest.json
+    and results/eval_results_latest.csv for later analysis.
     
     Args:
         checkpoint_path: Path to DQN checkpoint (uses config default if None)
@@ -149,6 +162,43 @@ def compare(checkpoint_path: str = None) -> Dict[str, Dict[str, Any]]:
         print(f"  Mean Score: {results[name]['mean_score']:.1%} ± {results[name]['std_score']:.1%}")
         print(f"  Max Score: {results[name]['max_score']:.1%}")
         print(f"  Mean Survival: {results[name]['mean_survival']:.0f} steps")
+        print(f"  Mean Reward: {results[name]['mean_reward']:.2f} ± {results[name]['std_reward']:.2f}")
+
+    # Save results to disk
+    os.makedirs(config.PATHS['results_dir'], exist_ok=True)
+    
+    # Prepare summary data for saving (exclude full score/reward lists for CSV)
+    summary_data = []
+    for agent_name, agent_results in results.items():
+        summary_data.append({
+            'agent_name': agent_name,
+            'mean_score': float(agent_results['mean_score']),
+            'std_score': float(agent_results['std_score']),
+            'max_score': float(agent_results['max_score']),
+            'mean_survival': float(agent_results['mean_survival']),
+            'mean_reward': float(agent_results['mean_reward']),
+            'std_reward': float(agent_results['std_reward'])
+        })
+    
+    # Save to JSON (include full data)
+    json_path = os.path.join(config.PATHS['results_dir'], 'eval_results_latest.json')
+    with open(json_path, 'w') as f:
+        json.dump({
+            'timestamp': datetime.now().isoformat(),
+            'checkpoint_path': checkpoint_path if os.path.exists(checkpoint_path) else None,
+            'num_episodes': config.EVAL_CONFIG['num_episodes'],
+            'results': results
+        }, f, indent=2)
+    print(f"\nEvaluation results saved to {json_path}")
+    
+    # Save to CSV (summary only)
+    csv_path = os.path.join(config.PATHS['results_dir'], 'eval_results_latest.csv')
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=['agent_name', 'mean_score', 'std_score', 'max_score', 
+                                               'mean_survival', 'mean_reward', 'std_reward'])
+        writer.writeheader()
+        writer.writerows(summary_data)
+    print(f"Evaluation summary saved to {csv_path}")
 
     return results
 
