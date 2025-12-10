@@ -32,8 +32,8 @@ def main():
         print("=" * 60)
         num_episodes = args.episodes if args.episodes else config.TRAIN_CONFIG['num_episodes']
         render = args.render if args.render else config.TRAIN_CONFIG['render']
-        agent, rewards, scores = train_dqn(num_episodes=num_episodes, render=render)
-        print("\nTraining completed!")
+        agent, rewards, scores, run_dir = train_dqn(num_episodes=num_episodes, render=render)
+        print(f"\nTraining completed! Run directory: {run_dir}")
     
     if args.mode in ['eval', 'both']:
         print("\n" + "=" * 60)

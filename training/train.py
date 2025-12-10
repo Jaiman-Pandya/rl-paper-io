@@ -4,10 +4,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 import random
 import torch
 import csv
+import json
+from datetime import datetime
 
 from environments.paper_io_env import PaperIOEnv
 from agents.dqn import DQNAgent
@@ -31,18 +33,21 @@ def set_random_seeds(seed: int):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, List[float], List[float]]:
+def train_dqn(num_episodes: int = None, render: bool = None, 
+              run_dir: Optional[str] = None) -> Tuple[DQNAgent, List[float], List[float], str]:
     """Train a DQN agent on the Paper.io environment.
     
     Training metrics (episode, reward, avg_loss, score, epsilon) are logged
-    to results/training_log.csv for later analysis.
+    to a run-specific directory under results/runs/<timestamp>/training_log.csv.
+    A config.json snapshot is also saved in the same directory for reproducibility.
     
     Args:
         num_episodes: Number of training episodes (uses config default if None)
         render: Whether to render during training (uses config default if None)
+        run_dir: Optional directory path for this run (auto-generated if None)
         
     Returns:
-        Tuple of (trained agent, list of episode rewards, list of episode scores)
+        Tuple of (trained agent, list of episode rewards, list of episode scores, run_directory_path)
     """
     if num_episodes is None:
         num_episodes = config.TRAIN_CONFIG['num_episodes']
@@ -85,20 +90,31 @@ def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, 
     scores = []
     losses = []
 
-    # Set up CSV logging for training metrics
-    os.makedirs(config.PATHS['results_dir'], exist_ok=True)
-    log_path = os.path.join(config.PATHS['results_dir'], 'training_log.csv')
-    file_exists = os.path.exists(log_path)
+    # Create run directory with timestamp
+    if run_dir is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        run_dir = os.path.join(config.PATHS['results_dir'], 'runs', timestamp)
+    else:
+        timestamp = os.path.basename(run_dir)
+    os.makedirs(run_dir, exist_ok=True)
     
-    # Open CSV file for appending (or create new with header)
-    csv_file = open(log_path, 'a', newline='')
+    # Save configuration snapshot for reproducibility
+    config_dict = config.get_full_config_dict()
+    config_dict['run_timestamp'] = timestamp
+    config_dict['num_episodes_actual'] = num_episodes
+    config_path = os.path.join(run_dir, 'config.json')
+    with open(config_path, 'w') as f:
+        json.dump(config_dict, f, indent=2)
+    print(f"Configuration saved to {config_path}")
+    
+    # Set up CSV logging for training metrics in run directory
+    log_path = os.path.join(run_dir, 'training_log.csv')
+    csv_file = open(log_path, 'w', newline='')
     csv_writer = csv.writer(csv_file)
-    
-    # Write header if file is new
-    if not file_exists:
-        csv_writer.writerow(['episode', 'reward', 'avg_loss', 'score', 'epsilon'])
+    csv_writer.writerow(['episode', 'reward', 'avg_loss', 'score', 'epsilon'])
 
     print("Beginning the training process!")
+
 
     for episode in tqdm(range(num_episodes)):
         # Reset with seed for reproducibility (each episode gets a deterministic seed)
@@ -166,9 +182,21 @@ def train_dqn(num_episodes: int = None, render: bool = None) -> Tuple[DQNAgent, 
     csv_file.close()
 
     env.close()
+    
+    # Save final training summary
+    summary_path = os.path.join(run_dir, 'training_summary.json')
+    with open(summary_path, 'w') as f:
+        json.dump({
+            'final_episode': num_episodes,
+            'final_epsilon': agent.epsilon,
+            'mean_final_reward': float(np.mean(rewards[-100:])) if len(rewards) >= 100 else float(np.mean(rewards)),
+            'mean_final_score': float(np.mean(scores[-100:])) if len(scores) >= 100 else float(np.mean(scores)),
+            'total_episodes': len(rewards)
+        }, f, indent=2)
+    
     plot_training_results(rewards, scores, losses)
 
-    return agent, rewards, scores
+    return agent, rewards, scores, run_dir
 
 def plot_training_results(rewards: List[float], scores: List[float], losses: List[float]):
     """Plot training curves for rewards, scores, and losses.
@@ -204,4 +232,5 @@ def plot_training_results(rewards: List[float], scores: List[float], losses: Lis
 
 if __name__ == "__main__":
     os.makedirs(config.PATHS['checkpoints_dir'], exist_ok=True)
-    agent, rewards, scores = train_dqn()
+    agent, rewards, scores, run_dir = train_dqn()
+    print(f"\nTraining run directory: {run_dir}")

@@ -48,3 +48,23 @@ REPRODUCIBILITY_CONFIG = {
     'random_seed': RANDOM_SEED
 }
 
+def get_full_config_dict() -> dict:
+    """Get a complete dictionary of all configuration settings.
+    
+    Returns a nested dictionary containing all hyperparameters and settings
+    for environment, DQN agent, training, evaluation, and reproducibility.
+    This is useful for saving experiment configurations for reproducibility.
+    
+    Returns:
+        Dictionary containing all configuration values
+    """
+    return {
+        'random_seed': RANDOM_SEED,
+        'environment': ENV_CONFIG.copy(),
+        'dqn': DQN_CONFIG.copy(),
+        'training': TRAIN_CONFIG.copy(),
+        'evaluation': EVAL_CONFIG.copy(),
+        'paths': PATHS.copy(),
+        'reproducibility': REPRODUCIBILITY_CONFIG.copy()
+    }
+

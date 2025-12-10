@@ -110,14 +110,16 @@ def eval(agent: Any, num_episodes: int = None, render: bool = None) -> Dict[str,
         'rewards': episode_rewards
     }
 
-def compare(checkpoint_path: str = None) -> Dict[str, Dict[str, Any]]:
+def compare(checkpoint_path: str = None, run_id: str = None) -> Dict[str, Dict[str, Any]]:
     """Compare performance of DQN, Random, and Rule-Based agents.
     
     Evaluation results are automatically saved to results/eval_results_latest.json
-    and results/eval_results_latest.csv for later analysis.
+    and results/eval_results_latest.csv for later analysis. Results include a
+    run_id or timestamp to link back to training runs if provided.
     
     Args:
         checkpoint_path: Path to DQN checkpoint (uses config default if None)
+        run_id: Optional run identifier (e.g., timestamp) to link to training run
         
     Returns:
         Dictionary mapping agent names to their evaluation results
@@ -185,7 +187,8 @@ def compare(checkpoint_path: str = None) -> Dict[str, Dict[str, Any]]:
     with open(json_path, 'w') as f:
         json.dump({
             'timestamp': datetime.now().isoformat(),
-            'checkpoint_path': checkpoint_path if os.path.exists(checkpoint_path) else None,
+            'run_id': run_id,  # Link to training run if provided
+            'checkpoint_path': checkpoint_path if checkpoint_path and os.path.exists(checkpoint_path) else None,
             'num_episodes': config.EVAL_CONFIG['num_episodes'],
             'results': results
         }, f, indent=2)
